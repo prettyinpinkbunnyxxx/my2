@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="id" data-theme="putih">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Profil Vinyl</title>
+<meta name="theme-color" content="#f5f4f0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: gear dan mesin berputar di empat sudut, piringan hitam di tengah.
+   Tiap lagu membawa satu tema warna: putih, biru langit, coklat cream, merah jadul. */
+:root,
+:root[data-theme="putih"]{
+  --bg:#f5f4f0; --bg2:#e4e2da; --ink:#1d1d1b; --soft:#66655f;
+  --gear:#d9d8d2; --gear2:#ecebe6; --line:#b0afa8; --accent:#d9482b;
+  --label:#efece3; --label-ink:#1d1d1b;
+}
+:root[data-theme="langit"]{
+  --bg:#b9e0f5; --bg2:#8fcaea; --ink:#0c3a57; --soft:#2c5c7a;
+  --gear:#8dc3e2; --gear2:#a9d5ee; --line:#5ea2cc; --accent:#ee7b30;
+  --label:#ffd978; --label-ink:#0c3a57;
+}
+:root[data-theme="krem"]{
+  --bg:#c9c3d3; --bg2:#5d5a7f; --ink:#1f2640; --soft:#3d4466;
+  --gear:#a9a5c0; --gear2:#bcb8d0; --line:#77739a; --accent:#e3c585;
+  --label:#2d3552; --label-ink:#e8d9b4;
+}
+:root[data-theme="merah"]{
+  --bg:#a8341f; --bg2:#7c2212; --ink:#f4e4c1; --soft:#ecd5ab;
+  --gear:#c45a35; --gear2:#8e2515; --line:#5f170b; --accent:#f0b84a;
+  --label:#f1dcae; --label-ink:#7c2212;
+}
+:root{
+  --display:"Fraunces", Georgia, "Times New Roman", serif;
+  --mono:"Space Mono", ui-monospace, Menlo, Consolas, monospace;
+  --ease:.9s ease;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-height:100svh;
+  background-color:var(--bg); color:var(--ink);
+  font-family:var(--display);
+  transition:background-color var(--ease), color var(--ease);
+  -webkit-tap-highlight-color:transparent;
+}
+body::before{
+  content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-color:var(--bg2);
+  -webkit-mask-image:radial-gradient(circle at 50% 46%, transparent 30%, #000 135%);
+          mask-image:radial-gradient(circle at 50% 46%, transparent 30%, #000 135%);
+  transition:background-color var(--ease);
+}
+
+/* ---------- sudut: gear & mesin ---------- */
+.corner{position:fixed; width:clamp(150px,27vw,340px); aspect-ratio:1; z-index:0; pointer-events:none}
+.corner svg{display:block; width:100%; height:100%; overflow:visible}
+.corner.tl{top:-14px; left:-14px}
+.corner.tr{top:-8px; right:-8px}
+.corner.tr svg{transform:rotate(180deg)}
+.corner.bl{bottom:-8px; left:-8px}
+.corner.br{bottom:-14px; right:-14px}
+.corner.br svg{transform:rotate(180deg)}
+.gear{fill:var(--gear); stroke:var(--line); stroke-width:1.5; stroke-linejoin:round; transition:fill var(--ease), stroke var(--ease)}
+.cyl,.case{fill:var(--gear2); stroke:var(--line); stroke-width:2; transition:fill var(--ease), stroke var(--ease)}
+.cap,.pist{fill:var(--gear); stroke:var(--line); stroke-width:2; transition:fill var(--ease), stroke var(--ease)}
+.rod{stroke:var(--line); stroke-width:7; stroke-linecap:round; transition:stroke var(--ease)}
+.pin{fill:var(--accent); stroke:var(--line); stroke-width:1.5; transition:fill var(--ease), stroke var(--ease)}
+
+/* ---------- konten ---------- */
+.page{
+  position:relative; z-index:1; min-height:100svh;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:clamp(10px,2vh,22px); text-align:center;
+  padding-block:22px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.eyebrow{margin:0; font:400 12px/1 var(--mono); letter-spacing:.22em; text-transform:uppercase; color:var(--soft); transition:color var(--ease)}
+h1{margin:6px 0 4px; font-weight:700; font-size:clamp(1.7rem,4.6vw,2.7rem); line-height:1.05; text-wrap:balance}
+.tagline{margin:0 auto; max-width:46ch; font-size:1rem; line-height:1.5; color:var(--soft); transition:color var(--ease)}
+
+.stage{
+  --s:min(80vw, 54svh, 520px);
+  position:relative; width:var(--s); aspect-ratio:1; cursor:pointer; user-select:none; -webkit-user-select:none;
+}
+.stage:focus-visible{outline:2px solid var(--accent); outline-offset:6px; border-radius:50%}
+.ring{position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .8s ease; animation:spin 42s linear infinite reverse; overflow:visible}
+.playing .ring{opacity:1}
+.ring-text{font:700 20px var(--mono); fill:var(--ink); transition:fill var(--ease)}
+
+.record{
+  position:absolute; inset:7%; border-radius:50%;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.05) 0 38%, transparent 38.5%),
+    repeating-radial-gradient(circle at center, #141312 0 1.5px, #1f1d1c 1.5px 3px);
+  box-shadow:0 22px 44px rgba(0,0,0,.32), inset 0 0 0 calc(var(--s)*.006) rgba(255,255,255,.08);
+  animation:spin 4.5s linear infinite; animation-play-state:paused;
+}
+.playing .record{animation-play-state:running}
+.rec-marks{
+  position:absolute; inset:0; border-radius:50%;
+  background:conic-gradient(from 0deg, transparent 0 8deg, rgba(255,255,255,.10) 8deg 10deg, transparent 10deg 178deg, rgba(255,255,255,.07) 178deg 180deg, transparent 180deg);
+}
+.sheen{
+  position:absolute; inset:7%; border-radius:50%; pointer-events:none;
+  background:conic-gradient(from 20deg, transparent 0 38deg, rgba(255,255,255,.20) 50deg, transparent 64deg 198deg, rgba(255,255,255,.15) 228deg, transparent 246deg);
+}
+.label{
+  position:absolute; left:32%; top:32%; width:36%; height:36%; border-radius:50%;
+  background:var(--label); color:var(--label-ink);
+  transition:background-color var(--ease), color var(--ease);
+  display:block;
+}
+.label::after{content:""; position:absolute; inset:7%; border-radius:50%; border:1px dashed currentColor; opacity:.35}
+.label .l-top,.label .l-bot,.label strong{position:absolute; left:0; right:0; text-align:center}
+.label .l-top{top:15%; font:700 calc(var(--s)*.02)/1 var(--mono); letter-spacing:.2em}
+.label strong{top:27%; font-family:var(--display); font-weight:700; font-size:calc(var(--s)*.05); line-height:1; letter-spacing:.02em}
+.label .l-bot{bottom:15%; font:400 calc(var(--s)*.02)/1 var(--mono); letter-spacing:.14em}
+.label .photo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; border-radius:50%; display:none}
+.label.has-photo .photo{display:block}
+.label.has-photo::after{border-style:solid; border-color:var(--label); opacity:.9; inset:0; border-width:calc(var(--s)*.008)}
+.label.has-photo .l-top,.label.has-photo strong,.label.has-photo .l-bot,.label.has-photo .hole{display:none}
+.hole{position:absolute; left:50%; top:50%; width:7%; height:7%; transform:translate(-50%,-50%); border-radius:50%; background:var(--bg); transition:background-color var(--ease)}
+
+.now{display:flex; flex-direction:column; align-items:center; gap:8px; width:min(440px,100%)}
+.np-label{margin:0; font:400 12px/1 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--soft); transition:color var(--ease)}
+h2{margin:0; font-weight:700; font-size:clamp(1.25rem,3.2vw,1.7rem); line-height:1.15; text-wrap:balance}
+.artist{margin:0; font:400 13px/1.2 var(--mono); color:var(--soft); transition:color var(--ease)}
+.bar{display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; width:100%; font:400 12px var(--mono); font-variant-numeric:tabular-nums; margin-top:4px}
+.bar input{width:100%; margin:0; accent-color:var(--ink); cursor:pointer}
+.bar span{min-width:3.2ch; color:var(--soft); transition:color var(--ease)}
+.ctrl{display:flex; align-items:center; justify-content:center; gap:16px; margin-top:2px}
+.btn{
+  width:48px; height:48px; border-radius:50%; display:grid; place-items:center; cursor:pointer;
+  border:1.5px solid var(--ink); background:transparent; color:var(--ink);
+  transition:background-color var(--ease), color var(--ease), border-color var(--ease), transform .12s ease;
+}
+.btn:hover{transform:scale(1.06)}
+.btn:active{transform:scale(.96)}
+.btn.main{width:66px; height:66px; background:var(--ink); color:var(--bg)}
+.btn:focus-visible,.dot:focus-visible,.links a:focus-visible,.bar input:focus-visible{outline:2px solid var(--accent); outline-offset:3px}
+.btn .i-pause{display:none}
+.playing .btn .i-play{display:none}
+.playing .btn .i-pause{display:block}
+.dots{display:flex; gap:12px; margin-top:4px}
+.dot{
+  width:22px; height:22px; border-radius:50%; cursor:pointer; padding:0;
+  border:2px solid var(--ink); transition:border-color var(--ease), transform .12s ease;
+}
+.dot.on{outline:2px solid var(--ink); outline-offset:3px}
+.note{margin:2px 0 0; max-width:38ch; font:400 12px/1.5 var(--mono); color:var(--soft); transition:color var(--ease)}
+.links{display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:4px}
+.links a{
+  font:700 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; text-decoration:none;
+  color:var(--ink); padding:10px 14px; border:1.5px solid var(--ink); border-radius:999px;
+  transition:background-color var(--ease), color var(--ease), border-color var(--ease);
+}
+.btn-text{
+  font:700 12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase; cursor:pointer;
+  color:var(--ink); background:transparent; padding:10px 14px; border:1.5px dashed var(--ink); border-radius:999px;
+  transition:background-color var(--ease), color var(--ease), border-color var(--ease);
+}
+.btn-text:hover{background:var(--ink); color:var(--bg)}
+.btn-text:focus-visible,#photoIn:focus-visible + .btn-text{outline:2px solid var(--accent); outline-offset:3px}
+.links a:hover{background:var(--ink); color:var(--bg)}
+
+/* ---------- virtues & credit ---------- */
+.below{
+  position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:clamp(40px,7vh,72px);
+  padding-block:clamp(36px,6vh,64px) 72px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.panel{
+  width:min(920px,100%); padding:clamp(20px,4vw,40px);
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  border:1.5px solid var(--line); border-radius:6px;
+  transition:background-color var(--ease), border-color var(--ease);
+}
+.panel h3{margin:0 0 6px; font-weight:700; font-size:clamp(1.4rem,3.4vw,2rem); line-height:1.1; text-wrap:balance}
+.panel .sub{margin:0 0 26px; font:400 12px/1.5 var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--soft); transition:color var(--ease)}
+.vgroups{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:clamp(18px,3vw,34px)}
+.vgroup{min-width:0; display:flex; flex-direction:column; gap:14px}
+.vgroup > h4{margin:0; padding-bottom:8px; border-bottom:1.5px solid var(--line); font:700 12px/1.2 var(--mono); letter-spacing:.2em; text-transform:uppercase; color:var(--soft); transition:color var(--ease), border-color var(--ease)}
+.virtue{margin:0; display:flex; flex-direction:column; gap:4px}
+.virtue b{font-family:var(--display); font-weight:700; font-size:1.15rem; line-height:1.2}
+.virtue small{font:400 12px/1 var(--mono); letter-spacing:.08em; color:var(--soft); transition:color var(--ease)}
+.virtue p{margin:4px 0 0; font-size:.95rem; line-height:1.5; color:var(--soft); transition:color var(--ease)}
+.virtue.key{
+  padding:14px 14px 16px; background:var(--ink); color:var(--bg); border-radius:4px;
+  transition:background-color var(--ease), color var(--ease);
+}
+.virtue.key small,.virtue.key p{color:var(--bg); opacity:.82}
+.virtue.key .tag{align-self:flex-start; margin-bottom:4px; font:700 12px/1 var(--mono); letter-spacing:.16em; text-transform:uppercase; padding:4px 8px; border-radius:999px; background:var(--accent); color:var(--bg2)}
+.credits{display:flex; flex-wrap:wrap; gap:14px}
+.credit{
+  flex:1 1 220px; min-width:0; display:flex; align-items:center; gap:14px; padding:14px 16px;
+  border:1.5px solid var(--line); border-radius:4px; transition:border-color var(--ease);
+}
+.credit .logo{
+  flex:0 0 52px; width:52px; height:52px; border-radius:50%; display:grid; place-items:center; overflow:hidden;
+  background:var(--gear2); border:1.5px solid var(--line); font:700 1.1rem var(--display); color:var(--ink);
+  transition:background-color var(--ease), border-color var(--ease), color var(--ease);
+}
+.credit .logo img{width:100%; height:100%; object-fit:contain; display:block}
+.credit strong{display:block; font-weight:700; font-size:1.1rem; line-height:1.2; overflow-wrap:anywhere}
+.credit span{display:block; margin-top:4px; font:400 12px/1.3 var(--mono); color:var(--soft); transition:color var(--ease)}
+.fine{margin:18px 0 0; font:400 12px/1.6 var(--mono); color:var(--soft); transition:color var(--ease)}
+@media (max-width:760px){ .vgroups{grid-template-columns:1fr} }
+
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){
+  .record{animation-duration:14s}
+  .ring{animation-duration:120s}
+  body,.gear,.cyl,.case,.cap,.pist,.rod,.pin{transition-duration:.01s}
+}
+@media (max-width:480px){
+  .ctrl{gap:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="corner tl"><svg id="svgTL" viewBox="0 0 300 300" aria-hidden="true"></svg></div>
+<div class="corner tr"><svg id="svgTR" viewBox="0 0 300 300" aria-hidden="true"></svg></div>
+<div class="corner bl"><svg id="svgBL" viewBox="0 0 300 300" aria-hidden="true"></svg></div>
+<div class="corner br"><svg id="svgBR" viewBox="0 0 300 300" aria-hidden="true"></svg></div>
+
+<main class="page">
+  <header>
+    <p class="eyebrow">Profil</p>
+    <h1 id="name"></h1>
+    <p class="tagline" id="tagline"></p>
+  </header>
+
+  <div class="stage" id="stage" role="button" tabindex="0" aria-label="Putar atau jeda musik">
+    <svg class="ring" viewBox="0 0 400 400" aria-hidden="true">
+      <defs><path id="ringPath" d="M200 20 A180 180 0 1 1 199.99 20"/></defs>
+      <text class="ring-text" id="ringText"><textPath href="#ringPath" id="ringTP"></textPath></text>
+    </svg>
+    <div class="record">
+      <div class="rec-marks"></div>
+      <div class="label" id="label">
+        <img class="photo" id="photo" alt="Foto di tengah piringan">
+        <span class="l-top">SIDE A</span>
+        <strong id="lName"></strong>
+        <span class="l-bot" id="lNo"></span>
+        <i class="hole"></i>
+      </div>
+    </div>
+    <div class="sheen"></div>
+  </div>
+
+  <section class="now" aria-label="Pemutar musik">
+    <p class="np-label" id="npLabel">Ketuk piringan untuk memutar</p>
+    <h2 id="title"></h2>
+    <p class="artist" id="artist"></p>
+    <div class="bar">
+      <span id="tCur">0:00</span>
+      <input type="range" id="seek" min="0" max="1000" value="0" step="1" aria-label="Posisi lagu">
+      <span id="tDur">0:00</span>
+    </div>
+    <div class="ctrl">
+      <button class="btn" id="prev" type="button" aria-label="Lagu sebelumnya">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="currentColor"/></svg>
+      </button>
+      <button class="btn main" id="play" type="button" aria-label="Putar atau jeda">
+        <svg class="i-play" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+        <svg class="i-pause" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/></svg>
+      </button>
+      <button class="btn" id="next" type="button" aria-label="Lagu berikutnya">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z" fill="currentColor"/></svg>
+      </button>
+    </div>
+    <div class="dots" id="dots"></div>
+    <div class="links" style="margin-top:2px">
+      <label class="btn-text" for="photoIn" id="photoBtn">Pasang foto di piringan</label>
+      <input type="file" id="photoIn" accept="image/*" hidden>
+      <button class="btn-text" id="photoClear" type="button" hidden>Hapus foto</button>
+    </div>
+    <p class="note" id="note" hidden></p>
+  </section>
+
+  <nav class="links" id="links" aria-label="Tautan profil"></nav>
+</main>
+
+<div class="below">
+  <section class="panel" aria-labelledby="vTitle">
+    <h3 id="vTitle">Seven Heavenly Virtues</h3>
+    <p class="sub">Tujuh kebajikan, tiga kelompok</p>
+    <div class="vgroups" id="vgroups"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="cTitle">
+    <h3 id="cTitle">Credit</h3>
+    <p class="sub">Musik yang menemani halaman ini</p>
+    <div class="credits" id="credits"></div>
+    <p class="fine">Semua musik dan nama milik masing-masing artis dan labelnya. Halaman ini hanya profil pribadi, tidak berafiliasi.</p>
+  </section>
+</div>
+
+<script>
+/* ===================== ISI PROFIL & PLAYLIST (ubah di sini) ===================== */
+const PROFILE = {
+  name: "FKWKRLVSAIEE",
+  short: "aRRf",              // tampil di label piringan, singkat saja
+  photo: "",                      // foto di tengah piringan, mis. "img/foto.jpg". Kosong = pakai teks label
+                                  // Tiap lagu juga boleh punya cover sendiri: tambahkan cover: "img/x.jpg" di TRACKS
+  tagline: "correct guess.",
+  links: [
+    { label: "Instagram", href: "https://www.instagram.com/fkwkrlvsa.iee?psln=M3NobGltdnF6Zmls" },
+    { label: "GitHub",    href: "https://github.com/" },
+    { label: "whatever",  href: "https://www.instagram.com/p/DfcKPbNEvEe/?psln=MnJiZTloMmViN21w" }
+  ]
+};
+
+// Satu lagu = satu tema. theme: putih | langit | krem | merah
+// Letakkan file mp3 di folder "audio" sesuai nama di bawah. Lagu berganti otomatis saat selesai.
+const TRACKS = [
+  { title: "love",  artist: "Wave to Earth", src: "https://videotourl.com/audio/1794762358628-d7f9d602-4eec-48e7-beed-fbd3971b5076.mp3", theme: "putih"  },
+  { title: "My Hearts2Hearts",   artist: "CARMEN JIWOO STELLA YUHA JUUN ANA IAN YEON", src: "https://videotourl.com/audio/1794763055352-e2606588-4f87-4b1e-957c-ef23da081773.m4a", theme: "langit" },
+  { title: "gweh",  artist: "TVMXNTNA", src: "https://videotourl.com/audio/1794798267020-44c2a72c-b2c8-4a89-be56-f114c626cb72.mp3", theme: "krem"   },
+  { title: "My Illit", artist: "YUNAH MINJU MOKA WONHEE IROHA", src: "https://videotourl.com/audio/1794761704323-6f45850b-f9a5-4171-beb1-5fb87eff6bb1.m4a", theme: "merah"  }
+];
+// Seven Heavenly Virtues dibagi tiga kelompok. key:true menandai satu yang paling berarti buatmu.
+const VIRTUES = [
+  { group: "Menjaga diri", items: [
+    { en: "Chastity",    id: "Kemurnian",     text: "Menjaga diri dan niat tetap bersih." },
+    { en: "Temperance",  id: "Pengendalian",  text: "Tahu kapan cukup." }
+  ]},
+  { group: "Terus berjalan", items: [
+    { en: "Diligence",   id: "Ketekunan",     text: "Mengerjakan hal kecil sampai selesai." },
+    { en: "Patience",    id: "Kesabaran",     text: "Percaya pada waktu, tidak memaksa hasil.", key: true, why: "~~" }
+  ]},
+  { group: "Untuk sesama", items: [
+    { en: "Charity",     id: "Kemurahan hati", text: "Memberi tanpa menunggu balasan." },
+    { en: "Kindness",    id: "Kebaikan",       text: "Bersikap lembut, termasuk saat tidak ada yang melihat." },
+    { en: "Humility",    id: "Kerendahan hati", text: "Mau belajar dan mengakui kekurangan." }
+  ]}
+];
+// Ganti text dan pilihan key sesuai maknamu. Untuk logo, taruh gambar milikmu di folder img/ lalu isi logo: "img/nama.png".
+const CREDITS = [
+  { name: "wave to earth", role: "Artis",  logo: "https://videotourl.com/images/1794797819609-18b745fe-d48a-4754-9ae5-6982a438c704.jpg" },
+  { name: "ILLIT",         role: "Artis",  logo: "https://videotourl.com/images/1794797764681-8ba53fb2-5665-4202-8d27-5eeea75ecc00.jpg" },
+  { name: "Hearts2Hearts", role: "Artis",  logo: "https://videotourl.com/images/1794797558526-07f4f54a-d045-4495-a323-68b749bb61f6.jpg" }
+];
+const RING_TEXT = "I ALREADY GUESSED IT";
+const DEMO_SECONDS = 24;          // durasi tiap lagu saat file mp3 belum ada (mode demo)
+/* ================================================================================ */
+
+const SWATCH = { putih:"#f5f4f0", langit:"#b9e0f5", krem:"#c9c3d3", merah:"#a8341f" };
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function h(tag, attrs, parent){
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+const f2 = v => v.toFixed(2);
+
+/* ---------- gear ---------- */
+function circleSub(cx, cy, r){
+  return `M${f2(cx+r)} ${f2(cy)}A${f2(r)} ${f2(r)} 0 1 0 ${f2(cx-r)} ${f2(cy)}A${f2(r)} ${f2(r)} 0 1 0 ${f2(cx+r)} ${f2(cy)}Z`;
+}
+function gearPath(n, rp, m, cx, cy){
+  const ro = rp + m, rr = rp - 1.25*m, p = 2*Math.PI/n;
+  let d = "";
+  for (let k = 0; k < n; k++){
+    const a = k*p;
+    const pts = [[a-.30*p, rr],[a-.16*p, ro],[a+.16*p, ro],[a+.30*p, rr]];
+    pts.forEach((q, j) => {
+      d += (k === 0 && j === 0 ? "M" : "L") + f2(cx + q[1]*Math.cos(q[0])) + " " + f2(cy + q[1]*Math.sin(q[0]));
+    });
+  }
+  d += "Z";
+  const holes = Math.max(3, Math.floor(n/4));
+  const rh = rr*.58, hr = rr*.2;
+  for (let k = 0; k < holes; k++){
+    const a = k*2*Math.PI/holes;
+    d += circleSub(cx + rh*Math.cos(a), cy + rh*Math.sin(a), hr);
+  }
+  d += circleSub(cx, cy, rr*.14);
+  return d;
+}
+
+const gears = [];
+function cluster(svg, specs, w0){
+  const m = 5, made = [];
+  specs.forEach(s => {
+    const rp = m*s.n/2, p = 2*Math.PI/s.n;
+    let x, y, th0, dir, w;
+    if (s.parent == null){
+      x = s.x; y = s.y; th0 = 0; dir = 1; w = w0;
+    } else {
+      const P = made[s.parent];
+      const phi = s.ang*Math.PI/180, dist = P.rp + rp;
+      x = P.x + dist*Math.cos(phi); y = P.y + dist*Math.sin(phi);
+      const f = (((phi - P.th0)/P.p) % 1 + 1) % 1;
+      const fC = (((0.5 - f) % 1) + 1) % 1;
+      th0 = phi + Math.PI - p*fC;
+      dir = -P.dir; w = P.w*P.n/s.n;
+    }
+    const el = h("path", { class:"gear", "fill-rule":"evenodd", d:gearPath(s.n, rp, m, x, y) }, svg);
+    const g = { el, x, y, rp, n:s.n, p, th0, dir, w };
+    made.push(g); gears.push(g);
+  });
+}
+
+/* ---------- mesin piston ---------- */
+const engines = [];
+function engine(svg){
+  const cy = 250, r = 34, L = 100, xs = [90, 170];
+  h("rect", { class:"case", x:44, y:190, width:172, height:102, rx:30 }, svg);
+  const parts = xs.map((cx, idx) => {
+    h("rect", { class:"cyl", x:cx-28, y:66, width:56, height:126 }, svg);
+    h("rect", { class:"cap", x:cx-34, y:54, width:68, height:16, rx:4 }, svg);
+    return { cx, phase: idx*Math.PI };
+  });
+  parts.forEach(pt => {
+    pt.pist = h("rect", { class:"pist", x:pt.cx-24, y:90, width:48, height:26, rx:4 }, svg);
+    pt.rod = h("line", { class:"rod", x1:pt.cx, y1:116, x2:pt.cx, y2:250 }, svg);
+  });
+  parts.forEach(pt => {
+    pt.fly = h("path", { class:"gear", "fill-rule":"evenodd", d:gearPath(14, 34, 2*34/14, pt.cx, cy) }, svg);
+    pt.pinEl = h("circle", { class:"pin", r:6, cx:pt.cx, cy:cy-r }, svg);
+    pt.top = h("circle", { class:"pin", r:4, cx:pt.cx, cy:116 }, svg);
+  });
+  engines.push(T => {
+    parts.forEach(pt => {
+      const th = T*2.4 + pt.phase;
+      const px = pt.cx + r*Math.sin(th), py = cy - r*Math.cos(th);
+      const dx = px - pt.cx;
+      const yp = py - Math.sqrt(L*L - dx*dx);
+      pt.pinEl.setAttribute("cx", f2(px)); pt.pinEl.setAttribute("cy", f2(py));
+      pt.rod.setAttribute("x1", f2(px)); pt.rod.setAttribute("y1", f2(py));
+      pt.rod.setAttribute("x2", pt.cx);  pt.rod.setAttribute("y2", f2(yp));
+      pt.pist.setAttribute("y", f2(yp - 26));
+      pt.top.setAttribute("cy", f2(yp));
+      pt.fly.setAttribute("transform", `rotate(${f2(th*180/Math.PI)} ${pt.cx} ${cy})`);
+    });
+  });
+}
+
+cluster($("svgTL"), [ {n:30, x:48, y:48}, {n:18, parent:0, ang:22}, {n:12, parent:1, ang:84} ], 12);
+cluster($("svgBR"), [ {n:26, x:50, y:56}, {n:16, parent:0, ang:28}, {n:10, parent:1, ang:95} ], -15);
+engine($("svgBL"));
+engine($("svgTR"));
+
+/* ---------- teks melingkar di pinggir vinyl ---------- */
+(function buildRing(){
+  const FS = 20, circ = 2*Math.PI*180;
+  const unit = RING_TEXT + "  //  ";
+  const reps = Math.max(1, Math.round(circ/(unit.length*14.5)));
+  const chars = unit.length*reps;
+  const ls = Math.max(0, circ/chars - FS*0.612);
+  $("ringTP").textContent = unit.repeat(reps);
+  $("ringText").setAttribute("letter-spacing", ls.toFixed(2));
+})();
+
+/* ---------- animasi ---------- */
+let playing = false, speed = 1, T = 0, last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last)/1000); last = now;
+  if (!reduce){
+    speed += ((playing ? 2 : 1) - speed)*Math.min(1, dt*2);
+    T += dt*speed;
+  }
+  gears.forEach(g => {
+    g.el.setAttribute("transform", `rotate(${f2(g.th0*180/Math.PI + g.dir*g.w*T)} ${f2(g.x)} ${f2(g.y)})`);
+  });
+  engines.forEach(fn => fn(T));
+  if (playing && sim){
+    simPos += dt;
+    if (simPos >= DEMO_SECONDS) go(i + 1);
+  }
+  updateProgress();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- pemutar ---------- */
+const N = TRACKS.length;
+const audio = new Audio();
+audio.preload = "metadata";
+let i = 0, sim = true, simPos = 0, seeking = false, started = false;
+const meta = document.querySelector('meta[name="theme-color"]');
+const seek = $("seek");
+
+function pad(n){ return String(n).padStart(2, "0"); }
+function fmt(s){ s = Math.max(0, Math.floor(s || 0)); return Math.floor(s/60) + ":" + pad(s%60); }
+function curDur(){
+  if (sim) return DEMO_SECONDS;
+  return isFinite(audio.duration) && audio.duration > 0 ? audio.duration : 0;
+}
+function updateProgress(){
+  const dur = curDur(), pos = sim ? simPos : audio.currentTime;
+  if (!seeking) seek.value = dur ? Math.min(1000, pos/dur*1000) : 0;
+  $("tCur").textContent = fmt(pos);
+  $("tDur").textContent = dur ? fmt(dur) : "-:--";
+}
+function setTheme(name){
+  document.documentElement.dataset.theme = name;
+  if (meta) meta.content = SWATCH[name] || "#f5f4f0";
+}
+function refreshNote(){
+  const n = $("note");
+  if (sim){
+    n.hidden = false;
+    n.textContent = "Mode demo: file lagu belum ada, jadi tiap lagu berjalan " + DEMO_SECONDS + " detik. Taruh mp3 di folder audio/ lalu muat ulang.";
+  } else {
+    n.hidden = true;
+  }
+}
+function refreshUI(){
+  document.body.classList.toggle("playing", playing);
+  $("stage").setAttribute("aria-pressed", String(playing));
+  $("npLabel").textContent = playing ? "Sedang diputar" : (started ? "Dijeda" : "Ketuk piringan untuk memutar");
+  document.querySelectorAll(".dot").forEach((d, k) => d.classList.toggle("on", k === i));
+}
+function fallback(){
+  if (sim) return;
+  sim = true; simPos = 0;
+  audio.pause();
+  refreshNote(); updateProgress();
+}
+let userPhoto = "";
+function applyPhoto(){
+  const t = TRACKS[i] || {};
+  const src = userPhoto || t.cover || PROFILE.photo;
+  const im = $("photo"), lb = $("label");
+  if (src){
+    im.onerror = () => { lb.classList.remove("has-photo"); };
+    im.onload = () => { lb.classList.add("has-photo"); };
+    im.src = src;
+  } else {
+    lb.classList.remove("has-photo");
+    im.removeAttribute("src");
+  }
+  $("photoClear").hidden = !userPhoto;
+}
+$("photoIn").addEventListener("change", e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { userPhoto = String(rd.result); applyPhoto(); };
+  rd.readAsDataURL(f);
+  e.target.value = "";
+});
+$("photoClear").addEventListener("click", () => { userPhoto = ""; applyPhoto(); });
+
+function load(n){
+  i = ((n % N) + N) % N;
+  const t = TRACKS[i];
+  setTheme(t.theme);
+  applyPhoto();
+  $("title").textContent = t.title;
+  $("artist").textContent = t.artist;
+  $("lNo").textContent = pad(i + 1) + " / " + pad(N);
+  audio.pause();
+  simPos = 0;
+  sim = !t.src;
+  if (!sim) audio.src = t.src;
+  refreshNote(); updateProgress(); refreshUI();
+}
+function play(){
+  playing = true; started = true; refreshUI();
+  if (!sim){
+    const r = audio.play();
+    if (r && r.catch) r.catch(err => {
+      if (err && err.name === "AbortError") return;
+      if (err && err.name === "NotAllowedError"){ playing = false; refreshUI(); return; }
+      fallback();
+    });
+  }
+}
+function pause(){ playing = false; audio.pause(); refreshUI(); }
+function toggle(){ playing ? pause() : play(); }
+function go(n){
+  const was = playing;
+  load(n);
+  if (was) play();
+}
+
+audio.addEventListener("ended", () => { if (!sim) go(i + 1); });
+audio.addEventListener("error", () => {
+  if (!sim && audio.getAttribute("src") === TRACKS[i].src) fallback();
+});
+audio.addEventListener("loadedmetadata", () => { if (!sim) updateProgress(); });
+
+seek.addEventListener("input", () => {
+  const dur = curDur(); if (!dur) return;
+  const pos = seek.value/1000*dur;
+  if (sim) simPos = pos; else audio.currentTime = pos;
+  $("tCur").textContent = fmt(pos);
+});
+seek.addEventListener("pointerdown", () => { seeking = true; });
+["pointerup", "pointercancel", "blur", "change"].forEach(ev => seek.addEventListener(ev, () => { seeking = false; }));
+
+$("play").addEventListener("click", toggle);
+$("prev").addEventListener("click", () => go(i - 1));
+$("next").addEventListener("click", () => go(i + 1));
+$("stage").addEventListener("click", toggle);
+$("stage").addEventListener("keydown", e => {
+  if (e.key === " " || e.key === "Enter"){ e.preventDefault(); e.stopPropagation(); toggle(); }
+});
+document.addEventListener("keydown", e => {
+  if (e.target.closest && e.target.closest("button,input,[role=button]")) return;
+  if (e.key === " "){ e.preventDefault(); toggle(); }
+  else if (e.key === "ArrowRight") go(i + 1);
+  else if (e.key === "ArrowLeft") go(i - 1);
+});
+
+/* ---------- isi halaman ---------- */
+document.title = PROFILE.name + " · Profil";
+$("name").textContent = PROFILE.name;
+$("tagline").textContent = PROFILE.tagline;
+$("lName").textContent = PROFILE.short;
+PROFILE.links.forEach(l => {
+  const a = document.createElement("a");
+  a.href = l.href; a.textContent = l.label; a.target = "_blank"; a.rel = "noopener";
+  $("links").appendChild(a);
+});
+TRACKS.forEach((t, k) => {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "dot";
+  b.style.background = SWATCH[t.theme] || "#ccc";
+  b.setAttribute("aria-label", "Lagu " + (k + 1) + ": " + t.title);
+  b.title = t.title;
+  b.addEventListener("click", () => go(k));
+  $("dots").appendChild(b);
+});
+
+function el(tag, cls, txt){
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (txt != null) e.textContent = txt;
+  return e;
+}
+VIRTUES.forEach(g => {
+  const box = el("div", "vgroup");
+  box.appendChild(el("h4", "", g.group));
+  g.items.forEach(v => {
+    const a = el("article", "virtue" + (v.key ? " key" : ""));
+    if (v.key) a.appendChild(el("span", "tag", v.why || "Paling berarti"));
+    a.appendChild(el("b", "", v.en));
+    a.appendChild(el("small", "", v.id));
+    a.appendChild(el("p", "", v.text));
+    box.appendChild(a);
+  });
+  $("vgroups").appendChild(box);
+});
+CREDITS.forEach(c => {
+  const card = el("div", "credit");
+  const logo = el("div", "logo");
+  if (c.logo){
+    const im = document.createElement("img");
+    im.src = c.logo; im.alt = c.name + " logo";
+    im.addEventListener("error", () => { im.remove(); logo.textContent = c.name.charAt(0).toUpperCase(); });
+    logo.appendChild(im);
+  } else {
+    logo.textContent = c.name.charAt(0).toUpperCase();
+  }
+  const info = el("div");
+  info.appendChild(el("strong", "", c.name));
+  info.appendChild(el("span", "", c.role));
+  card.appendChild(logo); card.appendChild(info);
+  $("credits").appendChild(card);
+});
+
+load(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
